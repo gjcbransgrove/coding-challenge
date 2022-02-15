@@ -1,0 +1,21 @@
+﻿{
+  "keys": [
+    "5143_200"
+  ],
+  "value": {
+    "contentId": 5143,
+    "contentType": 1,
+    "name": "Green Super Smoothie",
+    "summary": "This is a Super Smoothie, specifically created for men and women on the Build Muscle goal. Our post-workout Super Smoothies make it easier to meet your daily energy needs for training and muscle gain. To view the full selection or swap to a different flavor for your post-workout meal, search “super smoothie” in Meals.",
+    "urlPartial": "green-super-smoothie",
+    "servingSize": 0,
+    "energy": 1750.93,
+    "calories": 418.1929,
+    "Carbs": 43.668,
+    "Protein": 33.07,
+    "DietryFibre": 9.9745,
+    "Fat": 39.038,
+    "SatFat": 2.372,
+    "Sugar": 39.038
+  }
+}
