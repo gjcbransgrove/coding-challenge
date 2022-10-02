@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using System.Net;
 using Loup.DotNet.Challenge.TestFramework;
+using Loup.DotNet.Challenge.FunctionApp.Models;
 
 namespace Loup.DotNet.Challenge.FunctionApp
 {
@@ -25,7 +26,37 @@ namespace Loup.DotNet.Challenge.FunctionApp
                                              int recipeId,
                                              UserContext user)
         {
-            return new EmptyResult();
+            try
+            {
+                user.Validate();
+            }
+            catch (ArgumentException)
+            {
+                return new UnauthorizedObjectResult(BuildErrorResultBody(HttpStatusCode.Unauthorized, "User must be authenticated."));
+            }
+
+            if (recipeId <= 0)
+            {
+                return new BadRequestObjectResult(BuildErrorResultBody(HttpStatusCode.BadRequest, "Invalid contentId. Expected contentId greater than zero."));
+            }
+
+            var recipe = _repository.Get<Recipe>(recipeId);
+
+            if (recipe != null)
+            {
+                return new OkObjectResult(JsonConvert.SerializeObject(recipe));
+            }
+
+            return new NotFoundObjectResult(BuildErrorResultBody(HttpStatusCode.NotFound, "Recipe not found."));
+        }
+
+        private string BuildErrorResultBody(HttpStatusCode statusCode, string message)
+        {
+            return JsonConvert.SerializeObject(new ErrorResult()
+            {
+                HttpStatusCode = statusCode,
+                Message = message
+            });
         }
     }
 }
