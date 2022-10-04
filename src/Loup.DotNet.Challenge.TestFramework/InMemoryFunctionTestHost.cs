@@ -23,15 +23,15 @@ namespace Loup.DotNet.Challenge.TestFramework
         private TStartup _startup;
         private List<ApiEndpoint> _functionDefinitions;
         private string _environment;
-        private List<KeyValuePair<string, string>> _dataSourceEntities { get; set; }
-        public IReadOnlyCollection<KeyValuePair<string, string>> Entities => _dataSourceEntities.AsReadOnly();
+        private Dictionary<string, string> _dataSourceEntities { get; set; }
+        public IReadOnlyDictionary<string, string> Entities => _dataSourceEntities;
         public IHost Host { get; private set; }
         public IRepository Repository {get;set;}
 
         public InMemoryFunctionTestHost()
         {
             _functionDefinitions = new List<ApiEndpoint>();
-            _dataSourceEntities = new List<KeyValuePair<string, string>>();
+            _dataSourceEntities = new Dictionary<string, string>();
             _environment = "Staging";
             Repository = new Mock<IRepository>().Object;
         }
@@ -79,6 +79,13 @@ namespace Loup.DotNet.Challenge.TestFramework
 
             Host = builder.Build();
 
+            GenerateEndpoints(startupAssembly);
+
+            LoadDataSourceEntities(testAssembly);
+        }
+
+        private void GenerateEndpoints(Assembly startupAssembly)
+        {
             IList<MethodInfo> methods = null;
             try
             {
@@ -88,19 +95,17 @@ namespace Loup.DotNet.Challenge.TestFramework
                                          .Where(m => m.GetParameters().FirstOrDefault(p => p.GetCustomAttribute<HttpTriggerAttribute>() != null) != null)
                                          .ToList();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // Suppress
-
-                methods = new List<MethodInfo>();
+                return;
             }
 
-            
             // register functions
 
             foreach (var method in methods)
             {
-                var trigger = method.GetParameters().FirstOrDefault(p => p.GetCustomAttribute<HttpTriggerAttribute>() != null)
+                var trigger = method.GetParameters()
+                                    .FirstOrDefault(p => p.GetCustomAttribute<HttpTriggerAttribute>() != null)
                                     .GetCustomAttribute<HttpTriggerAttribute>();
 
                 var httpRoute = HttpUtility.UrlDecode(trigger?.Route);
@@ -115,14 +120,13 @@ namespace Loup.DotNet.Challenge.TestFramework
 
                 RegisterEndpoint(endpoint);
             }
+        }
 
-            string filenameFilter = "_response";
-            var resources = testAssembly.GetManifestResourceNames();
+        private void LoadDataSourceEntities(Assembly testAssembly)
+        {
+            var resources = testAssembly.GetManifestResourceNames().Where(x => x.Contains("_response")).ToList();
             foreach (var resource in resources)
             {
-                if (!resource.Contains(filenameFilter))
-                    continue;
-
                 using (Stream stream = testAssembly.GetManifestResourceStream(resource))
                 using (StreamReader reader = new StreamReader(stream))
                 {
@@ -135,14 +139,14 @@ namespace Loup.DotNet.Challenge.TestFramework
                     {
                         value = jObject.Value<JObject>("value")?.ToString();
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         // Fallback to try and handle array data (e.g azure search result)
                         value = jObject.Value<JArray>("value")?.ToString();
                         // handle / skip
                     }
                     foreach (var key in keys)
-                        _dataSourceEntities.Add(new KeyValuePair<string, string>(key, value));
+                        _dataSourceEntities.Add(key, value);
                 }
             }
         }

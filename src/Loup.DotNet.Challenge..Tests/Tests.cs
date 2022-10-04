@@ -37,16 +37,11 @@ namespace Loup.DotNet.Challenge.Tests
             return JsonConvert.SerializeObject(JsonConvert.DeserializeObject<T>(testData));
         }
 
-        private string GetSampleTestData(string key)
-        {
-            return _testHost.Entities.First(x => x.Key == key).Value;
-        }
-
         [Fact]
         public async Task When_UserContext_Is_Authenticated_False_Expect_Unauthorized_Template()
         {
             // Arrange
-            var expectedSampleData = GetStrippedTestDataJson<ErrorResult>(GetSampleTestData("5143_401"));
+            var expectedSampleData = GetStrippedTestDataJson<ErrorResult>(_testHost.Entities["5143_401"]);
             using (var client = _testHost.CreateClient())
             using (var request = new HttpRequestMessage(HttpMethod.Get, "http://test/api/recipes/5143").SetupUserContext(id: "1234", isAuthenticated: false, isSubscribed: false, firstName: "John", lastName: "Citizen"))
             // Act
@@ -72,7 +67,7 @@ namespace Loup.DotNet.Challenge.Tests
         [Fact]
         public async Task When_Content_Id_Invalid_Integer_Expect_Bad_Request_Template()
         {
-            var expectedSampleData = GetStrippedTestDataJson<ErrorResult>(GetSampleTestData("5143_400"));
+            var expectedSampleData = GetStrippedTestDataJson<ErrorResult>(_testHost.Entities["5143_400"]);
             using (var client = _testHost.CreateClient())
             using (var request = new HttpRequestMessage(HttpMethod.Get, "http://test/api/recipes/-5143").SetupUserContext(id: "1234", isAuthenticated: true, isSubscribed: false, firstName: "John", lastName: "Citizen"))
             using (var response = await client.SendAsync(request))
@@ -106,7 +101,7 @@ namespace Loup.DotNet.Challenge.Tests
                     Sugar = 39.038
                 });
 
-            var expectedSampleData = GetStrippedTestDataJson<Recipe>(GetSampleTestData("5143_200"));
+            var expectedSampleData = GetStrippedTestDataJson<Recipe>(_testHost.Entities["5143_200"]);
 
             using (var client = _testHost.CreateClient())
             using (var request = new HttpRequestMessage(HttpMethod.Get, "http://test/api/recipes/5143").SetupUserContext(id: "1234", isAuthenticated: true, isSubscribed: false, firstName: "John", lastName: "Citizen"))
